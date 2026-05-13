@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UWU CLICKER FINAL V10 - AUTO-SAVE & REAL DATA</title>
+<style>
+    /* RESET & BASE */
+    *{ margin:0; padding:0; box-sizing:border-box; }
+    html,body{ width:100%; height:100%; overflow:hidden; user-select: none; }
+
+    body {
+        display:flex; justify-content:center; align-items:center;
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        cursor:pointer; transition: background 0.3s ease;
+    }
+
+    /* SCROLLBAR CUSTOMIZATION */
+    ::-webkit-scrollbar { width: 10px; }
+    ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: #ff5fa2; border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff2d8d; }
+
+    /* RGB ANIMATION */
+    @keyframes rgb-bg {
+        0% { background: #ffadad; } 20% { background: #ffd6a5; } 40% { background: #fdffb6; }
+        60% { background: #caffbf; } 80% { background: #9bf6ff; } 100% { background: #ffadad; }
+    }
+    .rgb-active { animation: rgb-bg 5s infinite linear !important; }
+
+    /* KONTENERY BOCZNE */
+    .side-column {
+        position: fixed; top: 20px; bottom: 20px; width: 280px;
+        display: flex; flex-direction: column; gap: 15px; z-index: 9999;
+        overflow-y: auto; pointer-events: none; scrollbar-width: none; -ms-overflow-style: none; 
+    }
+    .side-column::-webkit-scrollbar { display: none; }
+    .left-column { left: 20px; }
+    .right-column { right: 20px; }
+
+    /* GLASS PANELS STYLE */
+    .glass-panel {
+        position: relative; width: 100%; background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 24px; padding: 20px;
+        color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37); transition: transform 0.2s, box-shadow 0.2s;
+        pointer-events: auto; flex-shrink: 0;
+    }
+    .glass-panel:hover { transform: translateY(-5px); box-shadow: 0 12px 40px 0 rgba(255, 95, 162, 0.4); }
+
+    /* STATYSTYKI */
+    .stats-panel { 
+        position: fixed; top: 20px; width: 350px; text-align: center; font-size: 1.2rem; letter-spacing: 1px; z-index: 9999;
+    }
+
+    h2 { font-size: 1.3rem; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #ff5fa2; padding-bottom: 5px; }
+    label { display:flex; align-items:center; gap:10px; margin:10px 0; font-weight:bold; cursor: pointer; transition: 0.2s; }
+    label:hover { color: #ffadad; transform: scale(1.02); }
+    
+    input[type="checkbox"] {
+        appearance: none; width: 20px; height: 20px; border: 2px solid #fff; border-radius: 5px; background: transparent; cursor: pointer; position: relative;
+    }
+    input[type="checkbox"]:checked { background: #ff5fa2; border-color: #ff5fa2; }
+    input[type="checkbox"]:checked::after { content: '✔'; position: absolute; top: -2px; left: 3px; font-size: 14px; color: white; }
+
+    button {
+        width:100%; margin-top:12px; border:none; padding:12px; border-radius:15px; font-weight:900; font-size: 1rem; cursor:pointer;
+        background: linear-gradient(45deg, #ff5fa2, #ff2d8d); color:white; transition:.2s; box-shadow: 0 4px 15px rgba(255, 45, 141, 0.5);
+        text-transform: uppercase; letter-spacing: 1px;
+    }
+    button:hover { transform: scale(1.05); filter: brightness(1.2); }
+    button:active { transform: scale(0.95); }
+    button:disabled { background: #555; cursor: not-allowed; transform: scale(1); box-shadow: none; color: #888; }
+
+    .toggle-btn { margin-top: 5px; padding: 6px; font-size: 0.8rem; background: #39ff14; color: #000; box-shadow: none; }
+    .toggle-btn.off { background: #ff0054; color: #fff; }
+
+    input[type="range"] { width: 100%; cursor: pointer; accent-color: #ff5fa2; }
+    input[type="color"] { width: 100%; height: 50px; border: none; border-radius: 12px; cursor: pointer; background: none; }
+    
+    /* INPUTY LOGOWANIA */
+    .input-field {
+        width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: none; 
+        font-weight: bold; background: rgba(255,255,255,0.9); outline: none;
+    }
+
+    /* PANELE POD OBRAZKIEM (LOGOWANIE I TOPKA) */
+    .bottom-center-panels {
+        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+        display: flex; gap: 30px; z-index: 9998; width: 720px; justify-content: center; pointer-events: none;
+    }
+    .bottom-center-panels .glass-panel { pointer-events: auto; }
+    
+    .top-list { list-style: none; font-weight: bold; line-height: 1.8; color: #ffea00; font-size: 1.1rem; }
+    .top-list li { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 4px 0; }
+    .top-list li span:last-child { color: white; }
+
+    /* COMBO TEXT */
+    #comboWrapper { position: fixed; bottom: 260px; left: 50%; transform: translateX(-50%); z-index: 10; pointer-events: none; }
+    #comboText { font-size: 3.5rem; font-weight: 900; color: #ffea00; text-shadow: 0 0 20px #ff0054, 3px 3px 0 #000; opacity: 0; transition: transform 0.1s; }
+
+    /* CUSTOM TOAST NOTIFICATIONS */
+    #customToastContainer {
+        position: fixed; top: 30px; left: 50%; transform: translateX(-50%); z-index: 9999999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+    }
+    .custom-toast {
+        background: rgba(15, 15, 15, 0.95); border-left: 6px solid #39ff14; color: white; padding: 15px 25px; border-radius: 8px; font-weight: bold; 
+        box-shadow: 0 5px 20px rgba(0,0,0,0.5); font-size: 1.1rem; animation: toastIn 0.3s ease forwards, toastOut 0.3s ease 3s forwards;
+    }
+    .custom-toast.error { border-left-color: #ff0054; }
+    @keyframes toastIn { from{opacity:0; transform:translateY(-30px);} to{opacity:1; transform:translateY(0);} }
+    @keyframes toastOut { from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-30px);} }
+
+    /* MAIN IMG */
+    .main-img-container { position: relative; z-index: 5; margin-bottom: 120px; }
+    .main-img{
+        width:350px; height:350px; object-fit:cover; border-radius:35px; border:10px solid rgba(255,255,255,0.8);
+        user-select:none; -webkit-user-drag:none; box-shadow: 0 0 50px rgba(255,255,255,.8), 0 0 100px rgba(255,0,120,.8);
+        transition: transform .05s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity .15s, filter 0.3s; cursor: pointer;
+    }
+    .main-img:hover { filter: brightness(1.1); }
+    .main-img:active{ transform: scale(.85) rotate(-8deg); box-shadow: 0 0 20px rgba(255,255,255,.8), 0 0 40px rgba(255,0,120,.8); }
+
+    .auto-pulse { animation: autoPulse 0.3s ease; }
+    @keyframes autoPulse { 0% {transform: scale(1);} 50% {transform: scale(0.97);} 100% {transform: scale(1);} }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    .spin-active { animation: spin 2s infinite linear; }
+
+    /* EFFECTS */
+    .floating-text{ position:absolute; pointer-events:none; font-weight:900; z-index:999; animation:pop .8s cubic-bezier(0.25, 1, 0.5, 1) forwards; text-shadow: 2px 2px 0 #000, 0 0 10px white; }
+    @keyframes pop{ 0%{ opacity:1; transform: translate(-50%,-50%) scale(.5); } 50%{ transform: translate(-50%,-100%) scale(1.5) rotate(15deg); } 100%{ opacity:0; transform: translate(-50%,-250%) scale(2) rotate(-10deg); } }
+
+    .steel{ position:absolute; width:100px; pointer-events:none; z-index:1; animation:steel .65s linear forwards; }
+    @keyframes steel{ from{ transform: translateY(-200px) rotate(0deg); opacity:1; } to{ transform: translateY(120vh) rotate(360deg); opacity:0; } }
+    
+    .particle { position:absolute; pointer-events:none; z-index:2; font-size: 40px; animation: fall 1.5s linear forwards; }
+    @keyframes fall { from { transform: translateY(-10vh) rotate(0deg); opacity:1; } to { transform: translateY(110vh) rotate(720deg); opacity:0; } }
+
+    .confetti { position:absolute; pointer-events:none; z-index: 100; width: 10px; height: 10px; animation: fallConfetti 2s ease-in forwards; }
+    @keyframes fallConfetti { 0% { transform: translateY(-50px) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+    /* Błysk */
+    #flashOverlay { position: fixed; inset: 0; background: white; pointer-events: none; opacity: 0; z-index: 99998; }
+    .flash-anim { animation: flashAnim .08s linear; }
+    @keyframes flashAnim { 0% { opacity: 0.5; } 100% { opacity: 0; } }
+
+    /* MODALE (TOS & UPGRADES) */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.9); backdrop-filter: blur(25px);
+        z-index: 100000; display: flex; justify-content: center; align-items: center; flex-direction: column;
+    }
+    .modal-box {
+        background: rgba(20, 20, 20, 0.95); width: 80%; max-width: 800px; height: 85vh;
+        border: 4px solid #ff5fa2; border-radius: 20px; padding: 30px; box-shadow: 0 0 50px #ff5fa2; color: #fff; display: flex; flex-direction: column; position: relative;
+    }
+    .modal-box h1 { text-align: center; color: #ff5fa2; margin-bottom: 10px; font-size: 2rem; text-shadow: 0 0 10px #ff5fa2; }
+    .modal-subtitle { text-align: center; color: #ffea00; margin-bottom: 20px; font-weight: bold; }
+    
+    .tos-content { flex: 1; overflow-y: scroll; background: #000; border-radius: 10px; padding: 20px; font-family: monospace; font-size: 16px; color: #0f0; border: 1px solid #333; line-height: 1.5; scroll-behavior: smooth; }
+
+    /* Ulepszenia zawartość */
+    .upgrade-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding: 10px; }
+    .upgrade-item { background: rgba(255, 255, 255, 0.1); border: 2px solid #ff5fa2; border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+    .upgrade-item:hover { background: rgba(255, 255, 255, 0.2); }
+    .upgrade-item h3 { color: #ffea00; margin-bottom: 5px; font-size: 1.1rem; }
+    .upgrade-item p { font-size: 0.85rem; color: #ddd; }
+    .upgrade-item button { width: auto; margin: 0; padding: 10px 20px; min-width: 150px; }
+
+    .modal-btn {
+        margin-top: 20px; padding: 20px; font-size: 1.5rem; background: #ff5fa2; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 0 20px #ff5fa2; opacity: 0.5; cursor: not-allowed;
+    }
+    .modal-btn.unlocked { opacity: 1; cursor: pointer; background: #39ff14; box-shadow: 0 0 40px #39ff14; color: #000; }
+    .modal-btn.unlocked:hover { transform: scale(1.02); filter: brightness(1.2); }
+    
+    .close-btn { opacity: 1; cursor: pointer; background: #ff0054; box-shadow: 0 0 40px #ff0054; color: #fff; }
+
+    /* Oznaczenie autozapisu */
+    #saveStatus {
+        position: fixed; top: 10px; left: 10px; font-size: 0.8rem; color: #fff; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 10px; z-index: 99999; display: none;
+    }
+</style>
+</head>
+<body>
+
+<!-- WSKAŹNIK AUTO ZAPISU -->
+<div id="saveStatus">Zapisano postęp... 💾</div>
+
+<!-- CUSTOM TOAST CONTAINER -->
+<div id="customToastContainer"></div>
+
+<!-- GIGANTYCZNY POPUP PRAW AUTORSKICH -->
+<div id="tosModal" class="modal-overlay">
+    <div class="modal-box">
+        <h1>⚠ UWAGA! REGULAMIN I PRAWA AUTORSKIE ⚠</h1>
+        <p class="modal-subtitle">MUSISZ ZJECHAĆ NA SAM DÓŁ, ABY ZAAKCEPTOWAĆ!</p>
+        <div id="tosContent" class="tos-content"></div>
+        <button class="modal-btn" id="acceptTos" disabled>ZJEDŹ NA DÓŁ ABY ODBLOKOWAĆ...</button>
+    </div>
+</div>
+
+<!-- GUI ULEPSZEŃ -->
+<div id="upgradeModal" class="modal-overlay" style="display: none;">
+    <div class="modal-box">
+        <h1>🌟 SUPER ULEPSZENIA (30) 🌟</h1>
+        <p class="modal-subtitle">Wydaj kliknięcia na stałe, potężne bonusy!</p>
+        <div class="upgrade-list" id="upgradeList"></div>
+        <button class="modal-btn close-btn" id="closeUpgrades">ZAMKNIJ ULEPSZENIA</button>
+    </div>
+</div>
+
+<!-- STATYSTYKI -->
+<div class="glass-panel stats-panel">
+    <h2>STATYSTYKI 📈</h2>
+    <p style="margin-bottom: 10px;">Kliknięcia: <span id="clickCount" style="color:#ffea00; font-weight:900; font-size: 2.2rem;">0</span></p>
+    <p>Pasywne CPS: <span id="cpsCount" style="color:#00ff55; font-weight:900; font-size: 1.5rem; text-shadow: 0 0 10px #00ff55;">0</span></p>
+    <p style="font-size: 0.9rem; margin-top: 5px; color: #ffadad;">Moc ręcznego kliknięcia: <span id="clickPowerDisplay">1</span></p>
+</div>
+
+<!-- KOLUMNA LEWA -->
+<div class="side-column left-column">
+    <div class="glass-panel">
+        <h2>SOUNDS 🎵</h2>
+        <label><input type="checkbox" id="uwu" checked> UWU</label>
+        <label><input type="checkbox" id="anime" checked> Anime</label>
+        <label><input type="checkbox" id="pipe" checked> Steel Pipe</label>
+        <label><input type="checkbox" id="boom" checked> Vine Boom</label>
+        <label><input type="checkbox" id="scream" checked> Scream</label>
+        <label><input type="checkbox" id="ara" checked> Ara Ara</label>
+        <label><input type="checkbox" id="meow"> Cat Meow 🐱</label>
+        <label><input type="checkbox" id="explosion"> Explosion 💥</label>
+        <label><input type="checkbox" id="yippee"> Yippee 🎉</label>
+        <label><input type="checkbox" id="bruh"> Bruh 🗿</label>
+        <label><input type="checkbox" id="fart"> Reverb Fart 💨</label>
+        <label><input type="checkbox" id="ohmygah"> Oh My Gah 🙀</label>
+        <hr style="border-color:rgba(255,255,255,0.2); margin: 10px 0;">
+        <label><input type="checkbox" id="all"> ALL AT ONCE 💀</label>
+    </div>
+
+    <div class="glass-panel">
+        <h2>EFEKTY WIZUALNE ✨</h2>
+        <label><input type="checkbox" id="fxText" checked> Latający Tekst</label>
+        <label><input type="checkbox" id="fxPipe" checked> Rury (Steel Pipe)</label>
+        <label><input type="checkbox" id="fxCats"> Spadające Koty 🐈</label>
+        <label><input type="checkbox" id="fxHearts"> Spadające Serca 💖</label>
+        <label><input type="checkbox" id="fxConfetti"> Konfetti 🎉</label>
+        <label><input type="checkbox" id="fxSpin"> Helikopter (Wiruj) 🚁</label>
+        <label><input type="checkbox" id="fxShake" checked> Trzęsienie Ekranu</label>
+        <label><input type="checkbox" id="fxFlash" checked> Błysk Ekranu</label>
+    </div>
+
+    <div class="glass-panel">
+        <h2>GŁOŚNOŚĆ 🔊</h2>
+        <input type="range" min="0" max="100" value="100" class="slider" id="volumeSlider">
+        <p id="volText" style="text-align: center; font-weight: bold; margin-top: 5px; font-size: 1.2rem;">100%</p>
+    </div>
+</div>
+
+<!-- KOLUMNA PRAWA -->
+<div class="side-column right-column">
+    <div class="glass-panel">
+        <h2>ZDJĘCIA 🖼️</h2>
+        <button id="img1btn">Jabuszko</button>
+        <button id="img2btn">avatarek</button>
+        <button id="img3btn">KOTEK</button>
+    </div>
+
+    <div class="glass-panel">
+        <h2>SKLEP 🛒</h2>
+        <p style="font-size: 0.9rem; margin-bottom:10px;">Kup automaty do klikania!</p>
+        <button id="buyAutoClicker">KUP AUTO-KLIKERA<br><small>(Koszt: <span id="autoCost">50</span>)</small></button>
+        <button id="toggleAuto" class="toggle-btn">STAN: WŁĄCZONY (ON)</button>
+        <div style="height: 10px;"></div>
+        <button id="buyMegaClicker">KUP MEGA-KLIKERA<br><small>(Koszt: <span id="megaCost">500</span>)</small></button>
+        <button id="toggleMega" class="toggle-btn">STAN: WŁĄCZONY (ON)</button>
+    </div>
+
+    <div class="glass-panel">
+        <h2>UPGRADES 🚀</h2>
+        <button id="openUpgrades" style="background: linear-gradient(45deg, #ffea00, #ff9100); color: black;">OTWÓRZ GUI ULEPSZEŃ</button>
+    </div>
+
+    <div class="glass-panel">
+        <h2>TŁO 🎨</h2>
+        <label><input type="checkbox" id="rgbToggle"> TRYB RGB 🌈</label>
+        <p style="font-size: 0.9rem; margin: 10px 0; text-align: center;">LUB WYBIERZ KOLOR:</p>
+        <input type="color" id="colorPicker" value="#ffc2d1">
+    </div>
+</div>
+
+<!-- COMBO TEXT -->
+<div id="comboWrapper"><div id="comboText">COMBO x1!</div></div>
+
+<!-- GŁÓWNY OBRAZEK -->
+<div class="main-img-container">
+    <img id="target" class="main-img" src="https://cdn.discordapp.com/attachments/1231615754751840277/1504180421414490344/image.png?ex=6a060cae&is=6a04bb2e&hm=c07cc0d62bfb06515d2c82c03fba9f8f08857988b5ac8c3242d5dbf7eadac89d&">
+</div>
+
+<!-- ŚRODKOWE PANELE DOLNE (Logowanie + Topka) -->
+<div class="bottom-center-panels">
+    <div class="glass-panel" style="width: 320px;">
+        <h2>AUTORYZACJA 🔑</h2>
+        <div id="authContent">
+            <input type="text" id="loginUsername" class="input-field" placeholder="Nazwa Użytkownika">
+            <input type="password" id="loginPassword" class="input-field" placeholder="Hasło (opcjonalnie)">
+            <button id="btnLogin">ZALOGUJ</button>
+            <button id="btnRegister" style="background: linear-gradient(45deg, #00e5ff, #0077ff); margin-top: 5px;">ZAREJESTRUJ</button>
+        </div>
+    </div>
+
+    <div class="glass-panel" style="width: 380px;">
+        <h2>Prawdziwa Topka 🏆 (LIVE)</h2>
+        <ul class="top-list" id="leaderboardList">
+            <!-- Tutaj pokazujemy prawdziwych zarejestrowanych graczy -->
+        </ul>
+    </div>
+</div>
+
+<!-- NAKŁADKA DO BŁYSKÓW -->
+<div id="flashOverlay"></div>
+
+<script>
+const fmt = (num) => num.toLocaleString('en-US');
+
+function showToast(message, isError = false) {
+    const container = document.getElementById("customToastContainer");
+    const toast = document.createElement("div");
+    toast.className = "custom-toast" + (isError ? " error" : "");
+    toast.innerText = message;
+    container.appendChild(toast);
+    setTimeout(() => { toast.remove(); }, 3300);
+}
+
+// Zmienne Gry
+let totalClicks = 0;
+let combo = 0;
+let comboTimeout;
+let autoClickers = 0;
+let megaClickers = 0;
+let autoCost = 50;
+let megaCost = 500;
+let autoEnabled = true;
+let megaEnabled = true;
+let clickBase = 1;
+let clickMult = 1;
+let autoMult = 1;
+let megaMult = 1;
+let globalMult = 1;
+let discountMult = 1.0;
+let purchasedUpgrades = [];
+let currentUser = "Gość";
+let isLoggedIn = false;
+
+// BAZA ULEPSZEŃ
+const upgradesData = [
+    { id: 1, name: "💪 Trening Palca", desc: "Moc kliknięcia +1", cost: 100, type: "clickFlat", val: 1 },
+    { id: 2, name: "🔊 Głośniki 200%", desc: "Odblokowuje głośność do 200%", cost: 250, type: "vol", val: 200 },
+    { id: 3, name: "🏷️ Karta Rabatowa", desc: "Ceny w sklepie -10%", cost: 500, type: "discount", val: 0.9 },
+    { id: 4, name: "👊 Tytanowe Kostki", desc: "Moc kliknięcia +5", cost: 1000, type: "clickFlat", val: 5 },
+    { id: 5, name: "🔊 Głośniki 300%", desc: "Będzie głośno! (300%)", cost: 2500, type: "vol", val: 300 },
+    { id: 6, name: "🤖 Oliwa do Maszyn", desc: "Auto-Klikery klikają 2x mocniej", cost: 5000, type: "autoMult", val: 2 },
+    { id: 7, name: "🏷️ Karta VIP", desc: "Ceny w sklepie -20%", cost: 7500, type: "discount", val: 0.8 },
+    { id: 8, name: "💥 Młot Pneumatyczny", desc: "Moc kliknięcia +25", cost: 10000, type: "clickFlat", val: 25 },
+    { id: 9, name: "🔊 Głośniki 500%", desc: "Sąsiedzi dzwonią na policję (500%)", cost: 15000, type: "vol", val: 500 },
+    { id: 10, name: "🦍 Kofeina", desc: "Mega-Klikery klikają 2x mocniej", cost: 25000, type: "megaMult", val: 2 },
+    { id: 11, name: "🔥 Płonący Kursor", desc: "Ręczne kliknięcia x2", cost: 50000, type: "clickMult", val: 2 },
+    { id: 12, name: "🔊 Głośniki 1000%", desc: "OSTRZEŻENIE O UTRACIE SŁUCHU", cost: 75000, type: "vol", val: 1000 },
+    { id: 13, name: "🏷️ Legitymacja Prezesa", desc: "Ceny w sklepie -30%", cost: 100000, type: "discount", val: 0.7 },
+    { id: 14, name: "⚡ Silniki Turbo", desc: "Auto-Klikery klikają 5x mocniej", cost: 150000, type: "autoMult", val: 5 },
+    { id: 15, name: "🔨 Kowadło", desc: "Moc kliknięcia +100", cost: 250000, type: "clickFlat", val: 100 },
+    { id: 16, name: "🔊 Głośniki 2000%", desc: "EARRAPE LEVEL: EXTREME", cost: 500000, type: "vol", val: 2000 },
+    { id: 17, name: "🚀 Reaktor Jądrowy", desc: "Mega-Klikery klikają 5x mocniej", cost: 750000, type: "megaMult", val: 5 },
+    { id: 18, name: "✨ Złoty Kursor", desc: "Ręczne kliknięcia x5", cost: 1000000, type: "clickMult", val: 5 },
+    { id: 19, name: "🌐 MATRIX", desc: "WSZYSTKO mnoży się x2 (Global)", cost: 2500000, type: "globalMult", val: 2 },
+    { id: 20, name: "🔊 Głośniki 5000%", desc: "Koniec Świata (5000%)", cost: 5000000, type: "vol", val: 5000 },
+    { id: 21, name: "💎 Diament", desc: "Moc kliknięcia +1000", cost: 10000000, type: "clickFlat", val: 1000 },
+    { id: 22, name: "🤖 Skynet", desc: "Auto-Klikery x10", cost: 25000000, type: "autoMult", val: 10 },
+    { id: 23, name: "🦍 King Kong", desc: "Mega-Klikery x10", cost: 50000000, type: "megaMult", val: 10 },
+    { id: 24, name: "🏷️ HAKOWANIE", desc: "Ceny w sklepie -50%", cost: 100000000, type: "discount", val: 0.5 },
+    { id: 25, name: "🔊 Głośniki 10000%", desc: "CZARNA DZIURA (10000%)", cost: 250000000, type: "vol", val: 10000 },
+    { id: 26, name: "🌌 Kwantowy Matrix", desc: "WSZYSTKO mnoży się x5", cost: 500000000, type: "globalMult", val: 5 },
+    { id: 27, name: "🪐 Ręka Boga", desc: "Moc kliknięcia +10,000", cost: 750000000, type: "clickFlat", val: 10000 },
+    { id: 28, name: "💥 Wielki Wybuch", desc: "Maszyny 100x mocniej", cost: 1000000000, type: "machineMult", val: 100 },
+    { id: 29, name: "🌸 Ostateczna Waifu", desc: "Ręczne kliknięcia x100", cost: 2500000000, type: "clickMult", val: 100 },
+    { id: 30, name: "👑 UWU GOD MODE", desc: "Moc kliknięcia +1,000,000", cost: 5000000000, type: "clickFlat", val: 1000000 }
+];
+
+// SYSTEM ZAPISU LOKALNEGO (LOCAL STORAGE)
+function saveGame() {
+    const saveData = {
+        totalClicks, autoClickers, megaClickers, autoCost, megaCost,
+        purchasedUpgrades, currentUser, isLoggedIn
+    };
+    localStorage.setItem("uwuClickerSaveData", JSON.stringify(saveData));
+    
+    // Mrygający napis o zapisie
+    const s = document.getElementById("saveStatus");
+    s.style.display = "block";
+    setTimeout(() => { s.style.display = "none"; }, 1000);
+}
+
+function loadGame() {
+    const saved = localStorage.getItem("uwuClickerSaveData");
+    if(saved) {
+        const data = JSON.parse(saved);
+        totalClicks = data.totalClicks || 0;
+        autoClickers = data.autoClickers || 0;
+        megaClickers = data.megaClickers || 0;
+        autoCost = data.autoCost || 50;
+        megaCost = data.megaCost || 500;
+        purchasedUpgrades = data.purchasedUpgrades || [];
+        currentUser = data.currentUser || "Gość";
+        isLoggedIn = data.isLoggedIn || false;
+
+        // Przeliczenie mnożników na nowo na podstawie kupionych ulepszeń
+        purchasedUpgrades.forEach(id => {
+            const upg = upgradesData.find(u => u.id === id);
+            if(upg) {
+                if(upg.type === "clickFlat") clickBase += upg.val;
+                if(upg.type === "clickMult") clickMult *= upg.val;
+                if(upg.type === "autoMult") autoMult *= upg.val;
+                if(upg.type === "megaMult") megaMult *= upg.val;
+                if(upg.type === "globalMult") { globalMult *= upg.val; clickMult *= upg.val; autoMult *= upg.val; megaMult *= upg.val; }
+                if(upg.type === "machineMult") { autoMult *= upg.val; megaMult *= upg.val; }
+                if(upg.type === "discount") discountMult *= upg.val;
+                if(upg.type === "vol") { document.getElementById("volumeSlider").max = upg.val; document.getElementById("volumeSlider").value = upg.val; document.getElementById("volText").innerText = upg.val + "%"; }
+            }
+        });
+
+        if(isLoggedIn) {
+            document.getElementById("authContent").innerHTML = `
+                <h3 style="color:#39ff14; text-align:center; font-size: 1.5rem; margin-top:20px;">Witaj, ${currentUser}!</h3>
+                <p style="text-align:center; font-size: 0.9rem; margin-top: 10px; color:#ddd;">Postęp został wczytany z zapisu.</p>
+            `;
+        }
+        showToast("Wczytano zapis gry! Witaj ponownie.");
+    }
+}
+
+// INICJALIZACJA GRY
+window.onload = () => {
+    let massiveString = "";
+    for(let i = 1; i <= 1000; i++) massiveString += `[Linia ${i}] Prawa Autorskie: 67 - Wszelkie kopiowanie surowo zabronione! UWU Clicker chroniony prawem!<br>`;
+    massiveString += `<br><br><strong style="color:white; font-size: 20px;">--- KONIEC REGULAMINU. MOŻESZ ZAAKCEPTOWAĆ ---</strong><br><br>`;
+    document.getElementById("tosContent").innerHTML = massiveString;
+    
+    loadGame();
+    renderUpgrades(); 
+    updateAllDisplays();
+};
+
+document.getElementById("tosContent").addEventListener("scroll", () => {
+    if (document.getElementById("tosContent").scrollTop + document.getElementById("tosContent").clientHeight >= document.getElementById("tosContent").scrollHeight - 50) {
+        document.getElementById("acceptTos").disabled = false; 
+        document.getElementById("acceptTos").classList.add("unlocked"); 
+        document.getElementById("acceptTos").innerText = "AKCEPTUJĘ I WCHODZĘ (UKRYJ)";
+    }
+});
+document.getElementById("acceptTos").onclick = () => { document.getElementById("tosModal").style.display = "none"; };
+
+// --- LOGOWANIE I TOPKA ---
+document.getElementById("btnLogin").onclick = () => {
+    let nick = document.getElementById("loginUsername").value.trim();
+    if(!nick) return showToast("Podaj nazwę użytkownika!", true);
+    currentUser = nick; isLoggedIn = true;
+    showToast(`Zalogowano pomyślnie jako: ${currentUser}!`);
+    document.getElementById("authContent").innerHTML = `
+        <h3 style="color:#39ff14; text-align:center; font-size: 1.5rem; margin-top:20px;">Witaj, ${currentUser}!</h3>
+        <p style="text-align:center; font-size: 0.9rem; margin-top: 10px; color:#ddd;">Twój postęp jest zapisywany (Lokalnie).</p>
+    `;
+    saveGame();
+    updateLeaderboard();
+};
+
+document.getElementById("btnRegister").onclick = () => {
+    let nick = document.getElementById("loginUsername").value.trim();
+    if(!nick) return showToast("Wpisz nick aby się zarejestrować!", true);
+    currentUser = nick; isLoggedIn = true;
+    showToast(`Konto utworzone! Witaj ${currentUser}!`);
+    document.getElementById("authContent").innerHTML = `
+        <h3 style="color:#00e5ff; text-align:center; font-size: 1.5rem; margin-top:20px;">Witaj, ${currentUser}!</h3>
+        <p style="text-align:center; font-size: 0.9rem; margin-top: 10px; color:#ddd;">Nowe konto aktywne.</p>
+    `;
+    saveGame();
+    updateLeaderboard();
+};
+
+function updateLeaderboard() {
+    const list = document.getElementById("leaderboardList");
+    list.innerHTML = "";
+    
+    if(!isLoggedIn) {
+        list.innerHTML = `<li style="text-align:center; width:100%; color:#aaa; font-size:0.9rem;">Zaloguj się, aby pojawić się w rankingu!</li>`;
+        return;
+    }
+    
+    // Obecnie pokazujemy prawdziwego użytkownika (reszta ukryta dopóki nie podepniesz bazy danych)
+    list.innerHTML += `<li><span style="color:#39ff14;">1. ${currentUser} 🎮</span> <span>${fmt(Math.floor(totalClicks))}</span></li>`;
+    list.innerHTML += `<li style="font-size:0.8rem; color:#888; border:none; text-align:center; justify-content:center; margin-top: 20px;">
+        Aby ranking był widoczny u innych graczy przez internet, potrzebna jest zewnętrzna baza danych!
+    </li>`;
+}
+
+// LOGIKA CLICKERA I EFEKTÓW
+const target = document.getElementById("target");
+const volumeSlider = document.getElementById("volumeSlider");
+
+function renderUpgrades() {
+    const list = document.getElementById("upgradeList");
+    list.innerHTML = "";
+    upgradesData.forEach(u => {
+        const div = document.createElement("div"); div.className = "upgrade-item"; div.id = `upg-${u.id}`;
+        let isBought = purchasedUpgrades.includes(u.id);
+        div.innerHTML = `
+            <div><h3>${u.name}</h3><p>${u.desc}</p></div>
+            <button id="btn-upg-${u.id}" onclick="buyUpgrade(${u.id})" ${isBought ? "disabled" : ""}>
+                ${isBought ? "KUPIONE" : "KUP (" + fmt(u.cost) + ")"}
+            </button>
+        `;
+        if(isBought) div.style.opacity = "0.4";
+        list.appendChild(div);
+    });
+}
+
+function buyUpgrade(id) {
+    const upg = upgradesData.find(u => u.id === id);
+    if(purchasedUpgrades.includes(id) || totalClicks < upg.cost) return;
+
+    totalClicks -= upg.cost; purchasedUpgrades.push(id);
+    document.getElementById(`btn-upg-${id}`).innerText = "KUPIONE";
+    document.getElementById(`btn-upg-${id}`).disabled = true;
+    document.getElementById(`upg-${id}`).style.opacity = "0.4";
+
+    showToast(`Odblokowano: ${upg.name}!`);
+
+    if(upg.type === "clickFlat") clickBase += upg.val;
+    if(upg.type === "clickMult") clickMult *= upg.val;
+    if(upg.type === "autoMult") autoMult *= upg.val;
+    if(upg.type === "megaMult") megaMult *= upg.val;
+    if(upg.type === "globalMult") { globalMult *= upg.val; clickMult *= upg.val; autoMult *= upg.val; megaMult *= upg.val; }
+    if(upg.type === "machineMult") { autoMult *= upg.val; megaMult *= upg.val; }
+    if(upg.type === "discount") discountMult *= upg.val;
+    if(upg.type === "vol") { volumeSlider.max = upg.val; volumeSlider.value = upg.val; document.getElementById("volText").innerText = upg.val + "%"; }
+
+    updateAllDisplays();
+    saveGame(); // Zapis od razu po zakupie
+}
+
+document.getElementById("openUpgrades").onclick = () => { document.getElementById("upgradeModal").style.display = "flex"; updateShop(); };
+document.getElementById("closeUpgrades").onclick = () => { document.getElementById("upgradeModal").style.display = "none"; };
+
+const cb = {
+    uwu: document.getElementById("uwu"), anime: document.getElementById("anime"), pipe: document.getElementById("pipe"),
+    boom: document.getElementById("boom"), scream: document.getElementById("scream"), ara: document.getElementById("ara"),
+    meow: document.getElementById("meow"), explosion: document.getElementById("explosion"), yippee: document.getElementById("yippee"),
+    bruh: document.getElementById("bruh"), fart: document.getElementById("fart"), ohmygah: document.getElementById("ohmygah"),
+    all: document.getElementById("all")
+};
+const fx = {
+    text: document.getElementById("fxText"), pipe: document.getElementById("fxPipe"), cats: document.getElementById("fxCats"),
+    hearts: document.getElementById("fxHearts"), confetti: document.getElementById("fxConfetti"), spin: document.getElementById("fxSpin"),
+    shake: document.getElementById("fxShake"), flash: document.getElementById("fxFlash")
+};
+
+const soundUrls = {
+    uwu: "https://cdn.discordapp.com/attachments/1231615754751840277/1504182144564461750/7734a0d8-d26f-49b1-9b87-45e8272b1183.mp3?ex=6a060e49&is=6a04bcc9&hm=bd4e6ab83e4a0cfd4bf56250084618a2738eae488ddcd64fa5f40e519fdf802e&",
+    pipe: "https://www.myinstants.com/media/sounds/metal-pipe-clang.mp3",
+    anime: "https://www.myinstants.com/media/sounds/anime-wow-sound-effect.mp3",
+    boom: "https://www.myinstants.com/media/sounds/vine-boom.mp3",
+    scream: "https://www.myinstants.com/media/sounds/anime-ahh.mp3",
+    ara: "https://www.myinstants.com/media/sounds/ara-ara.mp3",
+    meow: "https://www.myinstants.com/media/sounds/cat-meow.mp3",
+    explosion: "https://www.myinstants.com/media/sounds/explosion_1.mp3",
+    yippee: "https://www.myinstants.com/media/sounds/yippee-tbh.mp3",
+    bruh: "https://www.myinstants.com/media/sounds/movie_1.mp3",
+    fart: "https://www.myinstants.com/media/sounds/fart-with-reverb.mp3",
+    ohmygah: "https://www.myinstants.com/media/sounds/oh-my-gah.mp3"
+};
+
+const texts = ["UWU", "AHHHH", "NYAA~", "KYAAAA", "STEEL PIPE", "BONK", "💢", "OOOHHH", ">:3", "KLANG", "UWAAAA", "RAAAAA", "BOOM", "ARA ARA", "MEOW", "YIPPEE!", "BRUH", "FART"];
+const image1 = "https://cdn.discordapp.com/attachments/1231615754751840277/1504180421414490344/image.png?ex=6a060cae&is=6a04bb2e&hm=c07cc0d62bfb06515d2c82c03fba9f8f08857988b5ac8c3242d5dbf7eadac89d&";
+const image2 = "https://cdn.discordapp.com/attachments/1504183132666986537/1504185432911511824/image.png?ex=6a061159&is=6a04bfd9&hm=4eaddd433cfde478b5b7d5b5516a288477f84ea74cd9e455ff95769c752e7e11&";
+const image3 = "https://cataas.com/cat/cute";
+
+document.getElementById("img1btn").onclick = () => { target.src = image1; };
+document.getElementById("img2btn").onclick = () => { target.src = image2; };
+document.getElementById("img3btn").onclick = () => { target.src = image3; };
+
+volumeSlider.addEventListener("input", () => { document.getElementById("volText").innerText = volumeSlider.value + "%"; });
+fx.spin.addEventListener("change", () => { if(fx.spin.checked) target.classList.add("spin-active"); else target.classList.remove("spin-active"); });
+document.getElementById("rgbToggle").addEventListener("change", (e) => { if(e.target.checked) document.body.classList.add("rgb-active"); else { document.body.classList.remove("rgb-active"); document.body.style.background = document.getElementById("colorPicker").value; }});
+document.getElementById("colorPicker").addEventListener("input", (e) => { document.getElementById("rgbToggle").checked = false; document.body.classList.remove("rgb-active"); document.body.style.background = e.target.value; });
+
+function playSound(url){
+    const audio = new Audio(url);
+    audio.volume = Math.min(volumeSlider.value / 100, 1.0); audio.playbackRate = Math.random() * 0.2 + 0.9;
+    audio.play().catch(e => {}); setTimeout(() => { audio.pause(); audio.src = ""; }, 2500);
+
+    if(volumeSlider.value > 100) {
+        let extraLayers = Math.floor(volumeSlider.value / 100) - 1; extraLayers = Math.min(extraLayers, 30);
+        for(let i=0; i<extraLayers; i++) {
+            const a2 = new Audio(url); a2.volume = 1.0; a2.playbackRate = audio.playbackRate;
+            a2.play().catch(e=>{}); setTimeout(() => { a2.pause(); a2.src = ""; }, 2500);
+        }
+    }
+}
+
+function doClick(eventX = null, eventY = null) {
+    let currentClickPower = clickBase * clickMult;
+    totalClicks += currentClickPower;
+
+    combo++;
+    document.getElementById("comboText").innerText = `COMBO x${combo}!`;
+    document.getElementById("comboText").style.opacity = 1;
+    document.getElementById("comboText").style.transform = `scale(${1 + (Math.min(combo, 50) * 0.05)})`;
+    clearTimeout(comboTimeout);
+    comboTimeout = setTimeout(() => { combo = 0; document.getElementById("comboText").style.opacity = 0; document.getElementById("comboText").style.transform = `scale(1)`; }, 1500);
+
+    const enabled = [];
+    if(cb.uwu.checked) enabled.push(soundUrls.uwu); if(cb.anime.checked) enabled.push(soundUrls.anime);
+    if(cb.pipe.checked) enabled.push(soundUrls.pipe); if(cb.boom.checked) enabled.push(soundUrls.boom);
+    if(cb.scream.checked) enabled.push(soundUrls.scream); if(cb.ara.checked) enabled.push(soundUrls.ara);
+    if(cb.meow.checked) enabled.push(soundUrls.meow); if(cb.explosion.checked) enabled.push(soundUrls.explosion);
+    if(cb.yippee.checked) enabled.push(soundUrls.yippee); if(cb.bruh.checked) enabled.push(soundUrls.bruh);
+    if(cb.fart.checked) enabled.push(soundUrls.fart); if(cb.ohmygah.checked) enabled.push(soundUrls.ohmygah);
+
+    if(enabled.length > 0) {
+        if(cb.all.checked) enabled.forEach(url => playSound(url)); else playSound(enabled[Math.floor(Math.random() * enabled.length)]);
+    }
+
+    if(fx.shake.checked) shake(); if(fx.flash.checked) flash();
+    
+    let x = eventX || (window.innerWidth / 2); let y = eventY || (window.innerHeight / 2);
+    if(fx.text.checked) for(let i=0; i<6; i++) spawnText(x, y);
+    if(fx.pipe.checked) for(let i=0; i<2; i++) spawnSteel();
+    if(fx.cats.checked && Math.random() > 0.4) spawnParticle("🐈");
+    if(fx.hearts.checked && Math.random() > 0.4) spawnParticle("💖");
+    if(fx.confetti.checked) spawnConfetti(x, y);
+    
+    updateAllDisplays();
+}
+
+target.addEventListener("click", (e) => { doClick(e.clientX, e.clientY); });
+
+function updateShop() {
+    let finalAutoCost = Math.floor(autoCost * discountMult);
+    let finalMegaCost = Math.floor(megaCost * discountMult);
+    document.getElementById("autoCost").innerText = fmt(finalAutoCost);
+    document.getElementById("megaCost").innerText = fmt(finalMegaCost);
+    
+    document.getElementById("buyAutoClicker").disabled = totalClicks < finalAutoCost;
+    document.getElementById("buyMegaClicker").disabled = totalClicks < finalMegaCost;
+
+    upgradesData.forEach(u => {
+        if(!purchasedUpgrades.includes(u.id)) {
+            const btn = document.getElementById(`btn-upg-${u.id}`);
+            if(btn) btn.disabled = totalClicks < u.cost;
+        }
+    });
+}
+
+function updateAllDisplays() {
+    document.getElementById("clickCount").innerText = fmt(Math.floor(totalClicks));
+    document.getElementById("clickPowerDisplay").innerText = fmt(Math.floor(clickBase * clickMult));
+    
+    let currentAutoCPS = autoEnabled ? (autoClickers * autoMult) : 0;
+    let currentMegaCPS = megaEnabled ? (megaClickers * 10 * megaMult) : 0;
+    document.getElementById("cpsCount").innerText = fmt(currentAutoCPS + currentMegaCPS);
+
+    updateShop();
+    updateLeaderboard(); 
+}
+
+document.getElementById("buyAutoClicker").addEventListener("click", () => {
+    let finalCost = Math.floor(autoCost * discountMult);
+    if(totalClicks >= finalCost) { totalClicks -= finalCost; autoCost = Math.floor(autoCost * 1.5); autoClickers++; updateAllDisplays(); saveGame(); }
+});
+
+document.getElementById("buyMegaClicker").addEventListener("click", () => {
+    let finalCost = Math.floor(megaCost * discountMult);
+    if(totalClicks >= finalCost) { totalClicks -= finalCost; megaCost = Math.floor(megaCost * 1.8); megaClickers++; updateAllDisplays(); saveGame(); }
+});
+
+document.getElementById("toggleAuto").onclick = () => { autoEnabled = !autoEnabled; document.getElementById("toggleAuto").className = autoEnabled ? "toggle-btn" : "toggle-btn off"; document.getElementById("toggleAuto").innerText = autoEnabled ? "STAN: WŁĄCZONY (ON)" : "STAN: WYŁĄCZONY (OFF)"; updateAllDisplays(); };
+document.getElementById("toggleMega").onclick = () => { megaEnabled = !megaEnabled; document.getElementById("toggleMega").className = megaEnabled ? "toggle-btn" : "toggle-btn off"; document.getElementById("toggleMega").innerText = megaEnabled ? "STAN: WŁĄCZONY (ON)" : "STAN: WYŁĄCZONY (OFF)"; updateAllDisplays(); };
+
+// Pętla Czasowa: CPS + Zapis
+setInterval(() => {
+    let totalCPS = (autoEnabled ? (autoClickers * autoMult) : 0) + (megaEnabled ? (megaClickers * 10 * megaMult) : 0);
+    if(totalCPS > 0) {
+        totalClicks += totalCPS;
+        target.classList.remove("auto-pulse"); void target.offsetWidth; target.classList.add("auto-pulse");
+        updateAllDisplays();
+    }
+}, 1000);
+
+// Auto-Save co 10 sekund
+setInterval(() => { saveGame(); }, 10000);
+
+function spawnText(x, y){
+    const el = document.createElement("div"); el.className = "floating-text"; el.innerText = texts[Math.floor(Math.random() * texts.length)];
+    el.style.left = x + (Math.random() - .5) * 300 + "px"; el.style.top = y + (Math.random() - .5) * 150 + "px"; el.style.fontSize = (Math.random() * 30 + 20) + "px";
+    el.style.color = ["#ff0054", "#ffffff", "#ffea00", "#00e5ff", "#ff66c4", "#9d4edd", "#39ff14"][Math.floor(Math.random() * 7)];
+    document.body.appendChild(el); setTimeout(() => { el.remove(); }, 800);
+}
+
+function spawnSteel(){
+    const el = document.createElement("img"); el.src = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/I-beam_cross_section.svg/512px-I-beam_cross_section.svg.png";
+    el.className = "steel"; el.style.left = Math.random() * window.innerWidth + "px"; document.body.appendChild(el); setTimeout(() => { el.remove(); }, 650);
+}
+
+function spawnParticle(emoji){
+    const p = document.createElement("div"); p.className = "particle"; p.innerText = emoji;
+    p.style.left = Math.random() * window.innerWidth + "px"; document.body.appendChild(p); setTimeout(() => { p.remove(); }, 1500);
+}
+
+function spawnConfetti(x, y) {
+    const colors = ["#ff0054", "#39ff14", "#00e5ff", "#ffea00", "#ff66c4"];
+    for(let i=0; i<8; i++) {
+        const c = document.createElement("div"); c.className = "confetti"; c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        c.style.left = x + (Math.random() - 0.5) * 200 + "px"; c.style.top = y + (Math.random() - 0.5) * 100 + "px";
+        document.body.appendChild(c); setTimeout(() => { c.remove(); }, 2000);
+    }
+}
+
+function flash(){ document.getElementById("flashOverlay").classList.remove("flash-anim"); void document.getElementById("flashOverlay").offsetWidth; document.getElementById("flashOverlay").classList.add("flash-anim"); }
+function shake(){ document.body.animate([{transform:"translate(0px,0px)"}, {transform:"translate(-15px,10px)"}, {transform:"translate(15px,-10px)"}, {transform:"translate(-10px,5px)"}, {transform:"translate(0px,0px)"}], { duration: 120 }); }
+</script>
+</body>
+</html>
